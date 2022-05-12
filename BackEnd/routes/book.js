@@ -9,8 +9,9 @@ const bookCtrl = require('../controllers/book');
 
 //Definition des routes pour les livres
 router.post('/',auth, bookCtrl.create);
-router.get('/:bookId', bookCtrl.getOne);
-
+router.get('/:bookId',auth, bookCtrl.getOne);
+router.put('/:bookId',auth,bookCtrl.update);
+router.delete('/:bookId',auth,bookCtrl.delete);
 
 //Export des routes
 module.exports = router;

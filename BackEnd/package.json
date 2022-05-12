@@ -16,5 +16,13 @@
     "mongoose": "^6.3.3",
     "mysql2": "^2.3.3",
     "sequelize": "^6.19.0"
+  },
+  "prettier":{
+    
+      "trailingComma": "es5",
+      "tabWidth": 4,
+      "semi": false,
+      "singleQuote": true
+    
   }
 }
