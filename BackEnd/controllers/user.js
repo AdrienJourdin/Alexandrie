@@ -1,11 +1,11 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const db = require('../models')
+const recupUserId = require('../middleware/recupUserIdWithToken')
 const User = db.user
+const Book = db.book
 
 exports.signup = (req, res) => {
-    console.log(req.body)
-    console.log(req.body.user)
     const user = req.body
     //Hashage du mot de passe
     bcrypt.hash(user.password, 10).then((hash) => {
@@ -16,8 +16,8 @@ exports.signup = (req, res) => {
             password: hash,
             email: user.email,
             pseudo: user.pseudo,
-            bookRead: {},
-            bookWishList: {},
+            booksRead: {},
+            booksWishList: {},
         })
             .then((user) => {
                 res.status(200).send({
@@ -108,8 +108,8 @@ exports.update = (req, res) => {
             .then((hash) => {
                 User.update(
                     {
-                        password: hash,
                         ...user,
+                        password: hash,
                     },
                     { where: { id: userId } }
                 )
@@ -158,6 +158,7 @@ exports.update = (req, res) => {
 
 exports.getOne = (req, res) => {
     const userId = req.params.userId
+    console.log(typeof req.params.userId, req.params.userId)
     User.findOne({
         where: { id: userId },
         attributes: [
@@ -197,4 +198,52 @@ exports.getAll = (req, res) => {
             res.status(200).send(users)
         })
         .catch((error) => res.status(401).send({ error }))
+}
+
+exports.addToWishList = (req, res) => {
+    //const userId = recupUserId.recupUserIdWithToken(req)
+    const userId = recupUserId.recupUserIdWithToken(req).toString()
+    const bookId = req.params.bookId
+
+    User.findOne({
+        where: { id: userId },
+    })
+        .then((user) => {
+            let wishList = []
+            if (!user) {
+                return res.status(401).send({
+                    error: 'Utilisateur id=' + userId + ' introuvable',
+                })
+            }
+            if (user.booksWishList.includes(bookId)) {
+                wishList = user.booksWishList
+                const index = wishList.indexOf(bookId)
+                wishList.splice(index, 1)
+            } else {
+                if (user.booksWishList.length > 0) {
+                    wishList = user.booksWishList
+                    console.log(wishList)
+                }
+                wishList.push(bookId)
+            }
+            User.update({ booksWishList: wishList }, { where: { id: userId } })
+                .then(() => {
+                    res.status(200).send({
+                        message: 'Ajout du livre dans la wishlist réussi',
+                    })
+                })
+                .catch((error) => {
+                    res.status(401).send({
+                        message:
+                            "erreur lors de l'ajout du livre dans la wishList",
+                        error,
+                    })
+                })
+        })
+        .catch((error) =>
+            res.status(401).send({
+                message: "erreur lors de la recherche de l'utilisateur",
+                error,
+            })
+        )
 }
